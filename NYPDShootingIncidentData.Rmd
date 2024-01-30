@@ -1,0 +1,81 @@
+---
+title: "NYPDShootingIncidentData"
+author: "Arkodeb Maity"
+date: "2024-01-23"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
+```
+
+## NYPD Shooting Incident Data (Historic)
+
+This is a breakdown of every shooting incident that occurred in NYC going back to 2006 through the end of 2022. Each record represents a shooting incident in NYC and includes information about the event, the location and time of occurrence. In addition, information related to suspect and victim demographics is also included.
+
+```{r load_libraries}
+# Load the required libraries
+library(tidyverse)
+library(lubridate)
+```
+
+```{r get_url}
+# Get the data from the URL
+shooting_url <- "https://data.cityofnewyork.us/api/views/833y-fsy8/rows.csv"
+```
+
+```{r read_data}
+# Read in the data from the URL
+shooting_data <- read_csv(shooting_url[1])
+```
+
+```{r remove_cols}
+# Remove unwanted columns from the data
+shooting_data_f <- subset(shooting_data, select=-c(LOC_OF_OCCUR_DESC,JURISDICTION_CODE,LOC_CLASSFCTN_DESC,STATISTICAL_MURDER_FLAG,X_COORD_CD,Y_COORD_CD))
+```
+
+```{r convert_date}
+# Convert the date to proper format
+shooting_data_f$OCCUR_DATE <- mdy(shooting_data_f$OCCUR_DATE)
+```
+
+### Summary
+
+The following is a summary of the data after formatting by removing unwanted columns. There is possibility of missing data in some fields such as location description, perpetrator age group, perpetrator sex and perpetrator race. It is possible to use a placeholder value such as 'UNKNOWN' to handle those cases.
+
+```{r show_summary, echo=FALSE}
+# Show the summary of the data
+summary(shooting_data_f)
+```
+
+### Visualizations
+
+```{r show_location}
+# Show the latitude and longitude of the shootings
+ggplot(data = shooting_data_f, aes(x = Longitude, y = Latitude)) + geom_point() + ggtitle("GPS Location of Shootings")
+```
+
+The above graph shows the location of shootings by latitude and longitude. It is apparent that some areas are more concentrated than others. This raises additional questions such as what is the economic state of the more heavily concentrated areas? Is the police activity in NYC equally spread by location or are there other factors affecting why some coordinates have more gun violence than others? It might be worth looking into some key factors such as the differences in standard of living between some of the areas more heavily affected by gun violence and those that aren't.
+
+```{r show_victim_sex}
+# First remove the unwanted data
+trim_u <- shooting_data_f %>% filter(VIC_SEX != "U")
+
+# Then plot the data
+ggplot(trim_u, aes(x=VIC_SEX)) + geom_bar() + labs(y = "# of Incidents", x = "Victim Sex")
+```
+
+The above graph shows the number of incidents sorted by victim sex. It is shown that a disproportionately large number of the victims are male. This raises additional questions such as are certain sexes more prone to being the victims of gun violence than others? Are there socioeconomic or societal factors that can account for this large discrepancy?
+
+### Visualization and Model
+
+```{r show_date_and_time}
+# Plot the data
+ggplot(data = shooting_data_f, aes(x = OCCUR_DATE, y = OCCUR_TIME)) + geom_point() + geom_hline(yintercept=35000, linetype="dashed", color = "red", linewidth=2) + labs(y = "Time of Incident", x = "Date")
+```
+
+The above graph and model shows all incidents categorized by time and date. As can be observed by the model, the least number of incidents seem to occur around 10:00AM. It is interesting to postulate why this is the case. Is there a particular reason that gun violence is lowest at this time of day? On the flip side, is there a reason why gun violence is so much higher later at night and in the early hours of the morning?
+
+### Conclusion and Possible Bias
+
+While there are many available sets of data to analyze I have chosen just to highlight a few. The data itself is not biased but the types of data I have chosen to include and the analysis of said data could be skewed based on my personal biases. My political beliefs, as well as my cultural and economic background, all have potential to inject bias into the way the data is presented. I have tried my best to mitigate any personal bias I might have when it comes to presenting the data by trying to remain as objective as possible and asking questions when presenting the data, rather than jumping to biased conclusions.
